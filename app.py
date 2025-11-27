@@ -1,10 +1,33 @@
 from flask import Flask, render_template, request, jsonify
+import httpx
 import os
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
 from anthropic import Anthropic
 import google.generativeai as genai
+
+
+def _ensure_httpx_proxies_alias() -> None:
+    """Keep supporting the legacy `proxies` kwarg used by older clients."""
+    original_sync_init = httpx.Client.__init__
+    original_async_init = httpx.AsyncClient.__init__
+
+    def _sync_init_with_proxies(self, *args, proxies=None, **kwargs):
+        if proxies is not None:
+            kwargs.setdefault("proxy", proxies)
+        return original_sync_init(self, *args, **kwargs)
+
+    def _async_init_with_proxies(self, *args, proxies=None, **kwargs):
+        if proxies is not None:
+            kwargs.setdefault("proxy", proxies)
+        return original_async_init(self, *args, **kwargs)
+
+    httpx.Client.__init__ = _sync_init_with_proxies
+    httpx.AsyncClient.__init__ = _async_init_with_proxies
+
+
+_ensure_httpx_proxies_alias()
 
 load_dotenv()
 
