@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Chess - Play Against AI</title>
+    <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <header>
+            <h1>LLM Chess</h1>
+            <button id="settings-btn" class="icon-btn">⚙️ Settings</button>
+        </header>
+        <h2 class="subtitle">Play chess against different LLMs.</h2>
+
+        <main>
+            <div class="game-area">
+                <div class="board-wrapper">
+                    <div id="board" style="width: 100%"></div>
+                    <div id="illegal-move-overlay" class="game-overlay hidden">
+                        <div class="overlay-card">
+                            <p id="illegal-move-text">AI returned an illegal move. You win!</p>
+                            <button id="illegal-move-newgame" class="primary-btn">New Game</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-panel">
+                    <div class="model-selector">
+                        <label for="model-select">Opponent:</label>
+                        <select id="model-select">
+                            <option value="gpt-5.1">GPT-5.1</option>
+                            <option value="gpt-5-mini">GPT-5 Mini</option>
+                            <option value="gpt-4o">GPT-4o</option>
+                            <option value="gpt-4o-mini">GPT-4o Mini</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                    <div class="game-info">
+                        <div id="status">White to move</div>
+                        <div id="pgn"></div>
+                    </div>
+                    <div class="controls">
+                        <button id="start-btn" class="primary-btn">New Game</button>
+                        <button id="undo-btn" class="secondary-btn">Undo</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Settings Modal -->
+            <div id="settings-modal" class="modal hidden">
+                <div class="modal-content">
+                    <h2>API Key</h2>
+                    <p>Your key is stored locally in your browser.</p>
+                    <div class="input-group">
+                        <label for="openai-key">OpenAI API Key</label>
+                        <input type="password" id="openai-key" placeholder="sk-...">
+                    </div>
+                    <div class="modal-actions">
+                        <button id="save-keys-btn" class="primary-btn">Save & Close</button>
+                    </div>
+                </div>
+            </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/game.js"></script>
+</body>
+
+</html>
