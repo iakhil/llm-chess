@@ -102,71 +102,80 @@ async function makeAIMove() {
   const pgn = game.pgn();
   const model = $('#model-select').val();
 
-  // Get API keys from local storage
-  const keys = {
-    openai: localStorage.getItem('openai_key'),
-    anthropic: localStorage.getItem('anthropic_key'),
-    gemini: localStorage.getItem('gemini_key')
-  };
-
-  // Determine which key to use based on model
-  let apiKey = '';
-  if (model.includes('gpt')) apiKey = keys.openai;
-  else if (model.includes('claude')) apiKey = keys.anthropic;
-  else if (model.includes('gemini')) apiKey = keys.gemini;
+  const apiKey = localStorage.getItem('openai_key');
 
   if (!apiKey) {
-    alert('Please set the API key for this model in Settings.');
+    alert('Please set the OpenAI API key in Settings.');
     return;
   }
 
   $status.text('AI is thinking...');
 
+  const prompt = `You are a chess grandmaster.
+PGN: ${pgn}
+Analyze the position and determine the best move for the side to move.
+Provide your response in JSON format with two keys: "reasoning" (string) and "move" (string, UCI format e2e4).
+`;
+
+  const payload = {
+    model: model,
+    messages: [
+      { role: 'system', content: 'You are a chess engine. Output JSON.' },
+      { role: 'user', content: prompt }
+    ],
+    response_format: { type: 'json_object' }
+  };
+
   try {
-    const response = await fetch('/api/move', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        pgn: pgn,
-        model: model,
-        api_key: apiKey
-      })
+      body: JSON.stringify(payload)
     });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(errText || 'OpenAI request failed');
+    }
 
     const data = await response.json();
-
-    if (data.error) {
-      alert('Error: ' + data.error);
-      updateStatus();
-      return;
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) {
+      throw new Error('OpenAI returned no content');
     }
 
-    // Parse UCI move (e.g. "e2e4", "a7a8q")
-    const uci = data.move.toLowerCase();
+    let parsed;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      throw new Error('Failed to decode JSON from OpenAI response');
+    }
+
+    const uci = parsed.move?.toLowerCase();
+    if (!uci) {
+      throw new Error('No move returned');
+    }
+
     const from = uci.substring(0, 2);
     const to = uci.substring(2, 4);
-    const promotion = uci.length > 4 ? uci.substring(4, 5) : 'q'; // Default to queen if not specified but needed, or if specified use it.
+    const promotion = uci.length > 4 ? uci.substring(4, 5) : 'q';
 
-    const move = game.move({
-      from: from,
-      to: to,
-      promotion: promotion
-    });
-
+    const move = game.move({ from, to, promotion });
     if (move === null) {
-      console.error('AI returned illegal move:', data.move);
-      handleIllegalMove(data.move);
+      console.error('AI returned illegal move:', parsed.move);
+      handleIllegalMove(parsed.move);
       return;
-    } else {
-      board.position(game.fen());
-      updateStatus();
     }
 
+    board.position(game.fen());
+    updateStatus();
   } catch (error) {
     console.error('Error fetching AI move:', error);
     $status.text('Error fetching AI move.');
+    alert(`Error: ${error.message}`);
   }
 }
 
@@ -177,16 +186,11 @@ const saveBtn = document.getElementById('save-keys-btn');
 
 btn.onclick = function () {
   modal.classList.remove('hidden');
-  // Load existing keys
   document.getElementById('openai-key').value = localStorage.getItem('openai_key') || '';
-  document.getElementById('anthropic-key').value = localStorage.getItem('anthropic_key') || '';
-  document.getElementById('gemini-key').value = localStorage.getItem('gemini_key') || '';
 }
 
 saveBtn.onclick = function () {
   localStorage.setItem('openai_key', document.getElementById('openai-key').value);
-  localStorage.setItem('anthropic_key', document.getElementById('anthropic-key').value);
-  localStorage.setItem('gemini_key', document.getElementById('gemini-key').value);
   modal.classList.add('hidden');
 }
 

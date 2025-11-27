@@ -33,6 +33,7 @@ header {
     justify-content: flex-end;
     align-items: center;
     position: relative;
+    z-index: 1;
 }
 
 h1 {
@@ -48,6 +49,12 @@ h1 {
     transform: translateX(-50%);
     text-align: center;
     width: 100%;
+    pointer-events: none;
+}
+
+#settings-btn {
+    position: relative;
+    z-index: 2;
 }
 
 h2.subtitle {
