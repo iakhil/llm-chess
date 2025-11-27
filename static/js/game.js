@@ -3,8 +3,35 @@ let board = null;
 let game = new Chess();
 let $status = $('#status');
 let $pgn = $('#pgn');
+let aiIllegalMoveDetected = false;
+let $illegalMoveOverlay = null;
+let $illegalMoveText = null;
+
+function startNewGame() {
+  aiIllegalMoveDetected = false;
+  if ($illegalMoveOverlay) {
+    $illegalMoveOverlay.addClass('hidden');
+  }
+  game.reset();
+  board.start();
+  updateStatus();
+}
+
+function handleIllegalMove(move) {
+  aiIllegalMoveDetected = true;
+  const moveLabel = move ? move.toLowerCase() : 'unknown';
+  const message = `AI tried to make an illegal move (${moveLabel}). You win!`;
+  if ($illegalMoveText) {
+    $illegalMoveText.text(message);
+  }
+  if ($illegalMoveOverlay) {
+    $illegalMoveOverlay.removeClass('hidden');
+  }
+  $status.text(`Game over: ${message}`);
+}
 
 function onDragStart(source, piece, position, orientation) {
+  if (aiIllegalMoveDetected) return false;
   // do not pick up pieces if the game is over
   if (game.game_over()) return false;
 
@@ -71,6 +98,7 @@ function updateStatus() {
 }
 
 async function makeAIMove() {
+  if (aiIllegalMoveDetected || game.game_over()) return;
   const pgn = game.pgn();
   const model = $('#model-select').val();
 
@@ -129,7 +157,8 @@ async function makeAIMove() {
 
     if (move === null) {
       console.error('AI returned illegal move:', data.move);
-      alert('AI tried to make an illegal move: ' + data.move);
+      handleIllegalMove(data.move);
+      return;
     } else {
       board.position(game.fen());
       updateStatus();
@@ -163,6 +192,8 @@ saveBtn.onclick = function () {
 
 // Initialize
 $(document).ready(function () {
+  $illegalMoveOverlay = $('#illegal-move-overlay');
+  $illegalMoveText = $('#illegal-move-text');
   let config = {
     draggable: true,
     position: 'start',
@@ -179,11 +210,8 @@ $(document).ready(function () {
   board = Chessboard('board', config);
   updateStatus();
 
-  $('#start-btn').on('click', function () {
-    game.reset();
-    board.start();
-    updateStatus();
-  });
+  $('#start-btn').on('click', startNewGame);
+  $('#illegal-move-newgame').on('click', startNewGame);
 
   $('#undo-btn').on('click', function () {
     game.undo();

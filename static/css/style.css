@@ -50,6 +50,10 @@ h1 {
     align-items: start;
 }
 
+.board-wrapper {
+    position: relative;
+}
+
 #board {
     width: 100%;
     max-width: 600px;
@@ -96,6 +100,30 @@ input {
 .controls {
     display: flex;
     gap: 1rem;
+}
+
+.game-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(15, 23, 42, 0.9);
+    border-radius: 8px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.overlay-card {
+    max-width: 320px;
+    color: var(--text-color);
+}
+
+.overlay-card p {
+    margin-bottom: 1rem;
 }
 
 button {
